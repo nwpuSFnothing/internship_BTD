@@ -1,0 +1,10 @@
+.idea/
+configs/
+data/test/
+data/train/
+data/val/
+data/raw/yolo_staged_labels/
+logs/
+models/
+runs/
+weights/
