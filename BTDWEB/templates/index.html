@@ -1,74 +1,338 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>YOLOv12 Image Detection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO肿瘤检测和AI分析系统</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 20px;
         }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px dashed #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-section:hover {
+            border-color: #3498db;
+            background: #f1f8ff;
+        }
+        
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 25px;
         }
-        label {
+        
+        .form-group label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1em;
         }
-        img {
-            border: 2px solid #333;
-            margin-top: 20px;
-            max-width: 600px;
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
         }
-        .result-box {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f9f9f9;
+        
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
         }
-        ul {
-            padding-left: 20px;
+        
+        .file-input-display {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 60px;
         }
-        .form-note {
-            font-size: 14px;
+        
+        .file-input-display:hover {
+            border-color: #3498db;
+            background: #f8f9fa;
+        }
+        
+        .file-icon {
+            width: 30px;
+            height: 30px;
+            margin-right: 15px;
+            opacity: 0.6;
+        }
+        
+        .file-text {
+            flex: 1;
             color: #666;
-            margin-top: 5px;
+        }
+        
+        .form-note {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 18px 30px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        
+        .result-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-title {
+            color: #2c3e50;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .detection-results {
+            margin-bottom: 25px;
+        }
+        
+        .detection-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            list-style: none;
+        }
+        
+        .detection-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .detection-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .result-image {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .medical-icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
         }
     </style>
 </head>
 <body>
-    <h2>YOLOv12 图像目标检测系统</h2>
-
-    <form method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="image">选择检测图片 (支持 JPG, PNG 等常见格式)</label>
-            <input type="file" id="image" name="image" required>
-            <div class="form-note">请上传需要进行目标检测的图片文件</div>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 YOLO肿瘤检测和AI分析系统</h1>
+            <p>基于深度学习的智能医学影像分析平台</p>
         </div>
+        
+        <div class="main-content">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="upload-section">
+                    <div class="form-group">
+                        <label for="image">
+                            <span class="medical-icon">🔬</span>
+                            选择医学影像 (支持 JPG, PNG 等格式)
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="image" name="image" class="file-input" required accept="image/*">
+                            <div class="file-input-display">
+                                <svg class="file-icon" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="file-text">点击选择或拖拽医学影像文件</span>
+                            </div>
+                        </div>
+                        <div class="form-note">
+                            💡 请上传需要进行肿瘤检测的医学影像文件，支持X光片、CT扫描、MRI等格式
+                        </div>
+                    </div>
 
-        <div class="form-group">
-            <label for="model">选择检测模型 (PT格式)</label>
-            <input type="file" id="model" name="model" required>
-            <div class="form-note">请上传YOLO模型文件 (后缀为 .pt)</div>
+                    <div class="form-group">
+                        <label for="model">
+                            <span class="medical-icon">🧠</span>
+                            选择AI检测模型 (PT格式)
+                        </label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="model" name="model" class="file-input" required accept=".pt">
+                            <div class="file-input-display">
+                                <svg class="file-icon" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                                </svg>
+                                <span class="file-text">点击选择训练好的YOLO模型文件</span>
+                            </div>
+                        </div>
+                        <div class="form-note">
+                            🤖 请上传专门训练用于肿瘤检测的YOLO模型文件 (后缀为 .pt)
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        🚀 开始AI智能检测分析
+                    </button>
+                </div>
+            </form>
+
+            {% if prediction %}
+                <div class="result-section">
+                    <h3 class="result-title">📊 {{ prediction }}</h3>
+                    <div class="detection-results">
+                        <h4 style="color: #2c3e50; margin-bottom: 15px;">🎯 检测结果详情：</h4>
+                        <ul class="detection-list">
+                            {% for item in detections %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% if image_path %}
+                        <div style="text-align: center;">
+                            <h4 style="color: #2c3e50; margin-bottom: 15px;">📷 分析结果图像：</h4>
+                            <img src="{{ url_for('static', filename=image_path) }}?t={{ config['SEND_FILE_MAX_AGE_DEFAULT'] }}" 
+                                 class="result-image" alt="检测结果图像">
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
         </div>
+    </div>
 
-        <button type="submit" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
-            开始检测
-        </button>
-    </form>
+    <script>
+        // 文件选择交互优化
+        document.querySelectorAll('.file-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const display = this.parentNode.querySelector('.file-text');
+                if (this.files.length > 0) {
+                    display.textContent = `已选择: ${this.files[0].name}`;
+                    this.parentNode.querySelector('.file-input-display').style.borderColor = '#27ae60';
+                    this.parentNode.querySelector('.file-input-display').style.background = '#f0fff4';
+                }
+            });
+        });
 
-    {% if prediction %}
-        <div class="result-box">
-            <h3>{{ prediction }}</h3>
-            <ul>
-                {% for item in detections %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-            </ul>
-            <img src="{{ url_for('static', filename=image_path) }}?t={{ config['SEND_FILE_MAX_AGE_DEFAULT'] }}">
-        </div>
-    {% endif %}
+        // 拖拽上传功能
+        document.querySelectorAll('.file-input-display').forEach(display => {
+            display.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.style.borderColor = '#3498db';
+                this.style.background = '#f1f8ff';
+            });
+
+            display.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.style.borderColor = '#e9ecef';
+                this.style.background = 'white';
+            });
+
+            display.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const fileInput = this.parentNode.querySelector('.file-input');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    fileInput.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+    </script>
 </body>
 </html>
