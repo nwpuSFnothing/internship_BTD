@@ -8,6 +8,14 @@
             font-family: Arial, sans-serif;
             padding: 20px;
         }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
         img {
             border: 2px solid #333;
             margin-top: 20px;
@@ -15,17 +23,40 @@
         }
         .result-box {
             margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
         }
         ul {
             padding-left: 20px;
         }
+        .form-note {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
-    <h2>Upload Image for YOLOv12 Detection</h2>
+    <h2>YOLOv12 图像目标检测系统</h2>
+
     <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="image" required>
-        <input type="submit" value="Detect">
+        <div class="form-group">
+            <label for="image">选择检测图片 (支持 JPG, PNG 等常见格式)</label>
+            <input type="file" id="image" name="image" required>
+            <div class="form-note">请上传需要进行目标检测的图片文件</div>
+        </div>
+
+        <div class="form-group">
+            <label for="model">选择检测模型 (PT格式)</label>
+            <input type="file" id="model" name="model" required>
+            <div class="form-note">请上传YOLO模型文件 (后缀为 .pt)</div>
+        </div>
+
+        <button type="submit" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            开始检测
+        </button>
     </form>
 
     {% if prediction %}
