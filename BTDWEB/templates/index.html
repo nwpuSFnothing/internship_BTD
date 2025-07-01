@@ -186,6 +186,37 @@
             border-bottom: none;
         }
         
+        .ai-analysis {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #3498db;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .ai-analysis h4 {
+            color: #2c3e50;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .ai-analysis-content {
+            line-height: 1.8;
+            color: #34495e;
+            white-space: pre-wrap;
+            font-size: 1em;
+        }
+        
+        .analysis-loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
         .result-image {
             width: 100%;
             max-width: 800px;
@@ -202,6 +233,49 @@
             height: 24px;
             margin-right: 8px;
             vertical-align: middle;
+        }
+        
+        .download-section {
+            margin-top: 25px;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #e8f4fd 0%, #c3e9ff 100%);
+            border-radius: 10px;
+            border: 2px solid #3498db;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            margin: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+            background: linear-gradient(135deg, #229954 0%, #27ae60 100%);
+        }
+        
+        .download-btn:active {
+            transform: translateY(0);
+        }
+        
+        .download-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         @media (max-width: 768px) {
@@ -244,7 +318,7 @@
                             </div>
                         </div>
                         <div class="form-note">
-                            💡 请上传需要进行肿瘤检测的医学影像文件，支持X光片、CT扫描、MRI等格式
+                            💡 请上传需要进行肿瘤检测的医学影像文件，目前仅支持png,jpg格式
                         </div>
                     </div>
 
@@ -284,6 +358,23 @@
                             {% endfor %}
                         </ul>
                     </div>
+                    
+                    {% if ai_analysis %}
+                        <div class="ai-analysis">
+                            <h4>🤖 AI智能分析报告：</h4>
+                            <div class="ai-analysis-content">{{ ai_analysis }}</div>
+                        </div>
+                        
+                        {% if show_download_btn %}
+                        <div class="download-section">
+                            <h4 style="color: #2c3e50; margin-bottom: 15px;">📄 报告下载</h4>
+                            <p style="color: #7f8c8d; margin-bottom: 20px;">点击下方按钮下载完整的PDF分析报告</p>
+                            <button id="downloadPdfBtn" class="download-btn">
+                                📥 下载PDF报告
+                            </button>
+                        </div>
+                        {% endif %}
+                    {% endif %}
                     {% if image_path %}
                         <div style="text-align: center;">
                             <h4 style="color: #2c3e50; margin-bottom: 15px;">📷 分析结果图像：</h4>
@@ -332,6 +423,93 @@
                     fileInput.dispatchEvent(new Event('change'));
                 }
             });
+        });
+        
+        // PDF下载功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', function() {
+                    // 禁用按钮防止重复点击
+                    this.disabled = true;
+                    this.innerHTML = '⏳ 正在生成PDF...';
+                    
+                    // 收集当前页面的分析数据
+                    const detections = [];
+                    document.querySelectorAll('.detection-list li').forEach(li => {
+                        detections.push(li.textContent.trim());
+                    });
+                    
+                    const aiAnalysisElement = document.querySelector('.ai-analysis-content');
+                    const aiAnalysis = aiAnalysisElement ? aiAnalysisElement.textContent.trim() : '';
+                    
+                    // 从页面获取图像文件名
+                    const imageElement = document.querySelector('.result-image');
+                    const imagePath = imageElement ? imageElement.src : '';
+                    const imageFilename = imagePath ? imagePath.split('/').pop().split('?')[0] : 'unknown_image';
+                    
+                    // 获取模型名称（从session数据中获取，这里简化处理）
+                    const modelName = 'yolo_model';
+                    
+                    // 发送下载请求
+                    fetch('/download_pdf', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            detections: detections,
+                            ai_analysis: aiAnalysis,
+                            image_filename: imageFilename,
+                            model_name: modelName
+                        })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.blob();
+                        }
+                        throw new Error('PDF生成失败');
+                    })
+                    .then(blob => {
+                        // 创建下载链接
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        
+                        // 生成文件名
+                        const now = new Date();
+                        const timeStr = now.getFullYear() + 
+                                      String(now.getMonth() + 1).padStart(2, '0') + 
+                                      String(now.getDate()).padStart(2, '0') + '_' +
+                                      String(now.getHours()).padStart(2, '0') + 
+                                      String(now.getMinutes()).padStart(2, '0') + 
+                                      String(now.getSeconds()).padStart(2, '0');
+                        const reportId = now.getTime().toString();
+                        a.download = `${modelName}-${timeStr}-${reportId}.pdf`;
+                        
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        // 恢复按钮状态
+                        this.disabled = false;
+                        this.innerHTML = '📥 下载PDF报告';
+                        
+                        // 显示成功消息
+                        alert('PDF报告下载成功！');
+                    })
+                    .catch(error => {
+                        console.error('下载失败:', error);
+                        alert('PDF下载失败，请重试');
+                        
+                        // 恢复按钮状态
+                        this.disabled = false;
+                        this.innerHTML = '📥 下载PDF报告';
+                    });
+                });
+            }
         });
     </script>
 </body>
