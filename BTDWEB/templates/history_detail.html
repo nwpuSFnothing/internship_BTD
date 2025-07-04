@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>检测记录详情 - YOLO肿瘤检测和AI分析系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #1a5276;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+        }
+        
+        .navbar-brand img {
+            height: 38px;
+            margin-right: 15px;
+        }
+        
+        .navbar-brand-text {
+            color: white;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            padding: 25px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .nav-link.active {
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .nav-icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        /* 头部横幅样式 */
+        .hero-banner {
+            background: linear-gradient(135deg, #2874A6 0%, #148F77 100%);
+            padding: 60px 40px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-banner::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://img.icons8.com/doodle/96/000000/medical-doctor.png');
+            background-repeat: repeat;
+            opacity: 0.05;
+            z-index: 0;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-title {
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-weight: 800;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .nav-bar {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .nav-bar a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-bar a:hover {
+            background: #e3f2fd;
+            color: #2980b9;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .detail-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .section-title {
+            color: #1A5276;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #D4E6F1;
+        }
+        
+        .info-table {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .info-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .info-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            width: 25%;
+            vertical-align: top;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #5D6D7E;
+            width: 25%;
+            vertical-align: top;
+        }
+        
+        .info-value {
+            color: #2c3e50;
+        }
+        
+        .info-value {
+            color: #1A5276;
+        }
+        
+        .detection-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            list-style: none;
+            margin-bottom: 30px;
+        }
+        
+        .detection-list {
+            background: #EBF5FB;
+            padding: 20px;
+            border-radius: 10px;
+            list-style: none;
+            margin-bottom: 30px;
+        }
+        
+        .detection-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .detection-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #D4E6F1;
+            color: #1A5276;
+            font-weight: 500;
+        }
+        
+        .detection-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .result-image {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .ai-analysis {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #3498db;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .ai-analysis {
+            background: linear-gradient(135deg, #EBF5FB 0%, #D6EAF8 100%);
+            border-left: 4px solid #2E86C1;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .ai-analysis h4 {
+            color: #2c3e50;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .ai-analysis h4 {
+            color: #1A5276;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .ai-analysis-content {
+            line-height: 1.8;
+            color: #34495e;
+            white-space: pre-wrap;
+            font-size: 1em;
+        }
+        
+        .ai-analysis-content {
+            line-height: 1.8;
+            color: #2C3E50;
+            white-space: pre-wrap;
+            font-size: 1em;
+        }
+        
+        .warning-section {
+            background: #ffeceb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .warning-section {
+            background: #FADBD8;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #CB4335;
+        }
+        
+        .warning-list {
+            list-style: none;
+        }
+        
+        .warning-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #fadbd8;
+            border-radius: 8px;
+            color: #c0392b;
+            font-weight: 600;
+            font-size: 1.05em;
+            border-left: 3px solid #e74c3c;
+            display: flex;
+            align-items: center;
+        }
+        
+        .warning-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #F5B7B1;
+            border-radius: 8px;
+            color: #922B21;
+            font-weight: 600;
+            font-size: 1.05em;
+            border-left: 3px solid #CB4335;
+            display: flex;
+            align-items: center;
+        }
+        
+        .warning-item:before {
+            content: "⚠️";
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            margin: 10px 5px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            margin: 10px 5px;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-pdf {
+            background: #e74c3c;
+        }
+        
+        .btn-pdf {
+            background: linear-gradient(135deg, #CB4335 0%, #A93226 100%);
+        }
+        
+        .btn-pdf:hover {
+            background: #c0392b;
+        }
+        
+        .btn-pdf:hover {
+            background: linear-gradient(135deg, #B03A2E 0%, #922B21 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(169, 50, 38, 0.3);
+        }
+        
+        .btn-back {
+            background: #7f8c8d;
+        }
+        
+        .btn-back {
+            background: linear-gradient(135deg, #7F8C8D 0%, #5D6D7E 100%);
+        }
+        
+        .btn-back:hover {
+            background: #95a5a6;
+        }
+        
+        .btn-back:hover {
+            background: linear-gradient(135deg, #707B7C 0%, #566573 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(127, 140, 141, 0.3);
+        }
+        
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #EBF5FB;
+            border-radius: 10px;
+        }
+        
+        .error-message {
+            padding: 20px;
+            margin: 20px 0;
+            background: #ffeceb;
+            border-left: 5px solid #e74c3c;
+            color: #c0392b;
+            border-radius: 5px;
+        }
+        
+        .error-message {
+            padding: 20px;
+            margin: 20px 0;
+            background: #FADBD8;
+            border-left: 5px solid #CB4335;
+            color: #922B21;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navbar">
+            <div class="navbar-brand">
+                <img src="https://img.icons8.com/color/48/000000/brain.png" alt="Logo">
+                <span class="navbar-brand-text">BTDWEB</span>
+            </div>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <i class="nav-icon">🏠</i> 主页
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/history" class="nav-link">
+                        <i class="nav-icon">📋</i> 历史记录
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <i class="nav-icon">🔄</i> 刷新页面
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            {% if error %}
+                <div class="error-message">{{ error }}</div>
+            {% elif record %}
+                <!-- 基本信息部分 -->
+                <div class="detail-section">
+                    <h3 class="section-title">📋 基本信息</h3>
+                    <table class="info-table">
+                        <tr>
+                            <td class="info-label">检测时间</td>
+                            <td class="info-value">{{ record.formatted_time }}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">报告编号</td>
+                            <td class="info-value">{{ record.report_id }}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">医生署名</td>
+                            <td class="info-value">{{ record.doctor_name or '未记录' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">检测模型</td>
+                            <td class="info-value">{{ record.model_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">图像文件名</td>
+                            <td class="info-value">{{ record.image_filename }}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- 检测结果部分 -->
+                <div class="detail-section">
+                    <h3 class="section-title">🎯 检测结果</h3>
+                    
+                    {% if record.high_confidence_warnings and record.high_confidence_warnings|length > 0 %}
+                        <div class="warning-section">
+                            <h4 style="color: #e74c3c; margin-bottom: 15px;">⚠️ 高置信度警告：</h4>
+                            <div class="warning-list">
+                                {% for warning in record.high_confidence_warnings %}
+                                    <div class="warning-item">{{ warning }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if record.detections and record.detections|length > 0 %}
+                        <h4 style="color: #2c3e50; margin: 20px 0 15px 0;">检测结果详情：</h4>
+                        <ul class="detection-list">
+                            {% for item in record.detections %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p style="color: #7f8c8d; font-style: italic; text-align: center; padding: 20px;">未检测到任何对象</p>
+                    {% endif %}
+                    
+                    <!-- 检测图像 -->
+                    {% if record.image_path %}
+                        <div style="text-align: center;">
+                            <h4 style="color: #2c3e50; margin: 20px 0 15px 0;">📷 检测图像：</h4>
+                            <img src="{{ url_for('static', filename=record.image_path) }}" class="result-image" alt="检测结果图像">
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- AI分析部分 -->
+                {% if record.ai_analysis %}
+                    <div class="detail-section">
+                        <h3 class="section-title">🤖 AI智能分析</h3>
+                        <div class="ai-analysis">
+                            <h4>AI智能分析报告：</h4>
+                            <div class="ai-analysis-content">{{ record.ai_analysis }}</div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- 操作按钮 -->
+                <div class="action-bar">
+                    <a href="/history" class="btn btn-back">返回历史记录</a>
+                    {% if record.pdf_path %}
+                        <a href="{{ url_for('download_history_pdf', filename=record.pdf_filename) }}" class="btn btn-pdf">下载PDF报告</a>
+                    {% endif %}
+                </div>
+                
+            {% else %}
+                <div class="error-message">未找到记录或记录已被删除</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html> 

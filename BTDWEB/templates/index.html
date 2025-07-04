@@ -27,22 +27,107 @@
             overflow: hidden;
         }
         
-        .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        /* 新的导航栏样式 */
+        .navbar {
+            background-color: #1a5276;
+            padding: 0;
+            display: flex;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+        }
+        
+        .navbar-brand img {
+            height: 38px;
+            margin-right: 15px;
+        }
+        
+        .navbar-brand-text {
             color: white;
-            padding: 40px 30px;
-            text-align: center;
+            font-size: 1.5em;
+            font-weight: 700;
         }
         
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        .navbar-nav {
+            display: flex;
+            margin: 0;
+            padding: 0;
+            list-style: none;
         }
         
-        .header p {
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            padding: 25px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .nav-link.active {
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .nav-icon {
+            margin-right: 10px;
             font-size: 1.2em;
+        }
+        
+        /* 新的头部横幅样式 */
+        .hero-banner {
+            background: linear-gradient(135deg, #2874A6 0%, #148F77 100%);
+            padding: 60px 40px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-banner::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://img.icons8.com/doodle/96/000000/medical-doctor.png');
+            background-repeat: repeat;
+            opacity: 0.05;
+            z-index: 0;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-title {
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-weight: 800;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.3em;
             opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
         }
         
         .main-content {
@@ -59,8 +144,8 @@
         }
         
         .upload-section:hover {
-            border-color: #3498db;
-            background: #f1f8ff;
+            border-color: #2E86C1;
+            background: #EBF5FB;
         }
         
         .form-group {
@@ -102,8 +187,8 @@
         }
         
         .file-input-display:hover {
-            border-color: #3498db;
-            background: #f8f9fa;
+            border-color: #2E86C1;
+            background: #EBF5FB;
         }
         
         .file-icon {
@@ -128,7 +213,7 @@
         .submit-btn {
             width: 100%;
             padding: 18px 30px;
-            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            background: linear-gradient(135deg, #1E8449 0%, #27AE60 100%);
             color: white;
             border: none;
             border-radius: 12px;
@@ -136,12 +221,13 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
         }
         
         .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+            background: linear-gradient(135deg, #196F3D 0%, #229954 100%);
         }
         
         .submit-btn:active {
@@ -187,8 +273,8 @@
         }
         
         .ai-analysis {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-left: 4px solid #3498db;
+            background: linear-gradient(135deg, #EBF5FB 0%, #D6EAF8 100%);
+            border-left: 4px solid #2E86C1;
             padding: 25px;
             border-radius: 10px;
             margin: 25px 0;
@@ -196,7 +282,7 @@
         }
         
         .ai-analysis h4 {
-            color: #2c3e50;
+            color: #1A5276;
             font-size: 1.3em;
             margin-bottom: 15px;
             display: flex;
@@ -205,7 +291,7 @@
         
         .ai-analysis-content {
             line-height: 1.8;
-            color: #34495e;
+            color: #2C3E50;
             white-space: pre-wrap;
             font-size: 1em;
         }
@@ -239,13 +325,13 @@
             margin-top: 25px;
             text-align: center;
             padding: 20px;
-            background: linear-gradient(135deg, #e8f4fd 0%, #c3e9ff 100%);
+            background: linear-gradient(135deg, #D4E6F1 0%, #A9CCE3 100%);
             border-radius: 10px;
-            border: 2px solid #3498db;
+            border: 2px solid #2E86C1;
         }
         
         .download-btn {
-            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            background: linear-gradient(135deg, #1E8449 0%, #27AE60 100%);
             color: white;
             border: none;
             padding: 15px 30px;
@@ -254,7 +340,7 @@
             border-radius: 25px;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
             margin: 10px;
             display: inline-flex;
             align-items: center;
@@ -263,8 +349,8 @@
         
         .download-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
-            background: linear-gradient(135deg, #229954 0%, #27ae60 100%);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+            background: linear-gradient(135deg, #196F3D 0%, #229954 100%);
         }
         
         .download-btn:active {
@@ -276,6 +362,38 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+        
+        .warning-section {
+            background: #FADBD8;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #CB4335;
+        }
+        
+        .warning-list {
+            list-style: none;
+        }
+        
+        .warning-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #fadbd8;
+            border-radius: 8px;
+            color: #c0392b;
+            font-weight: 600;
+            font-size: 1.05em;
+            border-left: 3px solid #e74c3c;
+            display: flex;
+            align-items: center;
+        }
+        
+        .warning-item:before {
+            content: "⚠️";
+            margin-right: 10px;
+            font-size: 1.2em;
         }
         
         @media (max-width: 768px) {
@@ -295,9 +413,35 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🏥 YOLO肿瘤检测和AI分析系统</h1>
-            <p>基于深度学习的智能医学影像分析平台</p>
+        <div class="navbar">
+            <div class="navbar-brand">
+                <img src="https://img.icons8.com/color/48/000000/brain.png" alt="Logo">
+                <span class="navbar-brand-text">BTDWEB</span>
+            </div>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <i class="nav-icon">🏠</i> 主页
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/history" class="nav-link">
+                        <i class="nav-icon">📋</i> 历史记录
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <i class="nav-icon">🔄</i> 刷新页面
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="hero-banner">
+            <div class="hero-content">
+                <h1 class="hero-title">🏥 YOLO肿瘤检测和AI分析系统</h1>
+                <p class="hero-subtitle">基于深度学习的智能医学影像分析平台</p>
+            </div>
         </div>
         
         <div class="main-content">
@@ -341,8 +485,30 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="submit-btn">
-                        🚀 开始AI智能检测分析
+                    <div class="form-group">
+                        <label for="doctor_name">
+                            <span class="medical-icon">👨‍⚕️</span>
+                            医生署名
+                        </label>
+                        <input type="text" id="doctor_name" name="doctor_name" class="form-control" placeholder="请输入医生姓名（必填）" required style="width: 100%; padding: 15px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 1em; transition: all 0.3s ease;">
+                        <div class="form-note">
+                            📝 请输入负责此次分析的医生姓名，此信息将显示在生成的PDF报告中
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="perform_ai_analysis" style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="perform_ai_analysis" name="perform_ai_analysis" checked style="margin-right: 10px; width: 20px; height: 20px;">
+                            <span class="medical-icon">🤖</span>
+                            是否进行AI智能分析
+                        </label>
+                        <div class="form-note" style="margin-left: 30px;">
+                            💡 取消勾选将只进行YOLO检测，不进行AI分析
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        🚀 开始YOLO检测与AI分析
                     </button>
                 </div>
             </form>
@@ -350,6 +516,10 @@
             {% if prediction %}
                 <div class="result-section">
                     <h3 class="result-title">📊 {{ prediction }}</h3>
+                    <!-- 隐藏字段存储医生姓名，用于PDF下载 -->
+                    <input type="hidden" id="hidden_doctor_name" value="{{ request.form.get('doctor_name', '') }}">
+                    <!-- 隐藏字段存储PDF文件名 -->
+                    <input type="hidden" id="pdf_filename_hidden" value="{{ pdf_filename }}">
                     <div class="detection-results">
                         <h4 style="color: #2c3e50; margin-bottom: 15px;">🎯 检测结果详情：</h4>
                         <ul class="detection-list">
@@ -358,6 +528,17 @@
                             {% endfor %}
                         </ul>
                     </div>
+                    
+                    {% if high_confidence_warnings and high_confidence_warnings|length > 0 %}
+                    <div class="warning-section">
+                        <h4 style="color: #e74c3c; margin: 20px 0 15px 0;">⚠️ 高置信度警告：</h4>
+                        <div class="warning-list">
+                            {% for warning in high_confidence_warnings %}
+                                <div class="warning-item">{{ warning }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                     
                     {% if ai_analysis %}
                         <div class="ai-analysis">
@@ -443,6 +624,16 @@
                     const aiAnalysisElement = document.querySelector('.ai-analysis-content');
                     const aiAnalysis = aiAnalysisElement ? aiAnalysisElement.textContent.trim() : '';
                     
+                    // 收集高置信度警告信息
+                    const highConfidenceWarnings = [];
+                    document.querySelectorAll('.warning-item').forEach(item => {
+                        highConfidenceWarnings.push(item.textContent.trim());
+                    });
+                    
+                    // 获取PDF文件名（如果服务器已提供）
+                    const pdfFilename = document.getElementById('pdf_filename_hidden') ? 
+                                      document.getElementById('pdf_filename_hidden').value : '';
+                    
                     // 从页面获取图像文件名
                     const imageElement = document.querySelector('.result-image');
                     const imagePath = imageElement ? imageElement.src : '';
@@ -451,6 +642,14 @@
                     // 获取模型名称（从session数据中获取，这里简化处理）
                     const modelName = 'yolo_model';
                     
+                    // 获取医生姓名，如果输入框为空，尝试从会话中获取
+                    let doctorName = document.getElementById('doctor_name').value;
+                    if (!doctorName) {
+                        // 尝试从隐藏字段获取，这个字段会在表单提交后由服务端填充
+                        const hiddenDoctorNameField = document.getElementById('hidden_doctor_name');
+                        doctorName = hiddenDoctorNameField ? hiddenDoctorNameField.value : '';
+                    }
+                    
                     // 发送下载请求
                     fetch('/download_pdf', {
                         method: 'POST',
@@ -458,10 +657,7 @@
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            detections: detections,
-                            ai_analysis: aiAnalysis,
-                            image_filename: imageFilename,
-                            model_name: modelName
+                            pdf_filename: pdfFilename
                         })
                     })
                     .then(response => {
@@ -509,6 +705,16 @@
                         this.innerHTML = '📥 下载PDF报告';
                     });
                 });
+            }
+        });
+
+        // 更新提交按钮文本，根据AI分析选项
+        document.getElementById('perform_ai_analysis').addEventListener('change', function() {
+            const submitBtn = document.getElementById('submit-btn');
+            if (this.checked) {
+                submitBtn.textContent = '🚀 开始YOLO检测与AI分析';
+            } else {
+                submitBtn.textContent = '🚀 开始YOLO检测（无AI分析）';
             }
         });
     </script>
