@@ -1,0 +1,334 @@
+# **医学图像分割与检测系统数据准备流程需求文档**
+
+## **文档信息**
+
+- **文档编号**：REQ-YOLO-MEDICAL-DATA-PREP-001
+- **版本**：2.0
+- **作者**：雨霓
+- **创建日期**：2025年6月14日
+- **更新日期**：2025年6月14日
+- **状态**：草稿
+- **审核人**：技术负责人（待定）
+- **分发范围**：数据团队、开发团队、测试团队、项目经理
+
+## **1. 项目背景**
+
+为确保医学图像分割与检测系统中 YOLO 模型训练的高效性和数据质量，本模块旨在构建一套自动化、标准化的数据准备流程，涵盖项目初始化、原始 COCO JSON 格式数据到 YOLO 格式的转换（支持检测和分割）、数据集智能分割以及转换后数据集的严格验证。本模块通过专用脚本减少手动操作，提高数据处理的准确性和一致性，为后续模型训练和独立开发的 Web 应用（`BTDweb`）或潜在的桌面端应用提供可靠的数据基础。本需求文档定义了数据准备流程的各个环节、功能要求和实现细节。
+
+## **2. 目标**
+
+### **2.1 业务目标**
+- 自动化创建医学 YOLO 项目目录结构，降低初始化门槛，减少 50% 的手动配置时间。
+- 提供高效的 COCO JSON 到 YOLO 格式（检测和分割）转换机制，确保数据格式一致性。
+- 实现数据集的智能分割，确保训练、验证、测试集的合理分布，提升模型训练效果。
+- 建立严格的数据验证机制，在训练前识别并纠正数据集问题，减少 80% 的数据错误导致的训练失败。
+- 确保流程可重复、可追溯，支持模型迭代、实验管理和与 `BTDweb` 或桌面端应用的集成。
+
+### **2.2 技术目标**
+- 实现统一的路径管理模块，确保目录引用一致性和跨平台兼容。
+- 开发鲁棒的 COCO JSON 解析和 YOLO 格式转换逻辑，处理检测边界框和分割多边形标注。
+- 设计灵活的数据集分割策略，支持自定义比例，生成符合 YOLOv8/YOLOv11 规范的 `data.yaml`。
+- 构建全面的数据集验证工具，检查文件完整性、格式、坐标范围和类别一致性。
+- 集成统一的日志系统，记录操作、警告和错误，便于问题诊断和审计。
+- 确保脚本健壮性，优雅处理文件缺失、格式错误等异常。
+
+### **2.3 交付目标**
+- 交付脚本：`initialize_project.py`, `scripts/yolo_trans.py`, `scripts/yolo_validate.py`。
+- 交付 `utils` 工具包，包含路径、日志、数据处理和验证模块。
+- 提供 README 和测试报告，说明脚本用法、参数和执行顺序。
+- 完成 Git 提交，提交记录清晰，分支为 `feature/medical-data-pipeline`.
+
+## **3. 假设与约束**
+- **假设**：
+  - 原始数据为 COCO JSON 格式，包含 `images`, `annotations`, `categories` 字段，标注包括边界框（`bbox`）和分割掩码（`segmentation` 多边形坐标）。
+  - 图像文件格式为 `.jpg`, `.jpeg`, `.png`, `.bmp`, `.tiff`, `.webp`，文件名与 COCO JSON 标注匹配。
+  - 运行环境为 Python 3.12+，安装了必要依赖库。
+  - 类别列表为：`['NO_tumor', 'glioma', 'meningioma', 'pituitary', 'space-occupying lesion']`。
+  - 数据准备模块的输出将与独立开发的 `BTDweb` 或桌面端应用对接。
+- **约束**：
+  - 不支持其他标注格式（如 Pascal VOC XML），但预留扩展接口。
+  - 数据集分割比例之和必须为 1。
+  - 图像分辨率不得为 0，边界框和分割坐标不得超出图像范围。
+
+## **4. 功能需求**
+
+### **4.1 项目初始化 (`initialize_project.py`)**
+- **FR-001：目录结构创建**（优先级：高）
+  - 在 `MedicalYOLO/yoloserver/` 自动创建标准目录结构：
+    ```
+    MedicalYOLO/
+    └── yoloserver/
+        ├── configs/                                # 配置文件目录
+        ├── data/                                   # 数据集根目录
+        │   ├── raw/                                # 原始数据
+        │   │   ├── images/                         # 原始图像
+        │   │   └── annotations/                    # 原始 COCO JSON 标注
+        │   ├── train/                              # 训练集
+        │   │   ├── images/
+        │   │   └── labels/
+        │   ├── val/                                # 验证集
+        │   │   ├── images/
+        │   │   └── labels/
+        │   └── test/                               # 测试集
+        │       ├── images/
+        │       └── labels/
+        ├── logging/                                # 日志目录
+        │   ├── project_init/                       # 初始化日志
+        │   ├── data_conversion/                    # 转换日志
+        │   └── dataset_verification/               # 验证日志
+        ├── runs/                                   # 训练/推理结果
+        ├── models/                                 # 模型文件
+        │   ├── checkpoints/                        # 训练检查点
+        │   └── pretrained/                         # 预训练模型
+        ├── utils/                                  # 工具模块
+        │   ├── __init__.py
+        │   ├── paths.py
+        │   ├── logging_utils.py
+        │   ├── data_processing.py
+        │   └── dataset_validation.py
+    ```
+  - 检查目录是否存在，若存在则跳过创建，不覆盖现有文件。
+  - 日志记录创建状态。
+- **FR-002：原始数据放置指导**（优先级：中）
+  - 提示用户将图像和 COCO JSON 文件放入 `data/raw/images/` 和 `data/raw/annotations/`。
+  - 检查 `data/raw/` 状态（是否存在、是否为空），记录结果。
+- **FR-003：日志记录**（优先级：高）
+  - 使用 `utils.logging_utils.setup_logging(base_path, log_type='project_init', temp_log=True)` 初始化日志。
+  - 日志文件名为 `temp-时间戳-project-init.log`，保存到 `logging/project_init/`。
+  - 记录目录创建状态和 `data/raw/` 检查结果。
+  - 重命名为 `initN-时间戳-project-init.log`。
+  - 示例：
+    ```
+    2025-06-14 20:14:01,123 - YOLO_Init - INFO - 项目初始化开始
+    2025-06-14 20:14:01,124 - YOLO_Init - INFO - 目录创建: configs/, 已存在
+    2025-06-14 20:14:01,125 - YOLO_Init - INFO - 目录检查: data/raw/images/ 包含 1000 个文件
+    2025-06-14 20:14:01,126 - YOLO_Init - INFO - 日志重命名: init1-20250614_201401-project-init.log
+    ```
+
+### **4.2 数据集转换与分割 (`scripts/yolo_trans.py`)**
+- **FR-004：原始数据读取与匹配**（优先级：高）
+  - 读取 `data/raw/images/` 和 `data/raw/annotations/` 中的文件。
+  - 匹配图像和 COCO JSON 标注，记录未匹配文件。
+- **FR-005：COCO JSON 到 YOLO 格式转换**（优先级：高）
+  - 使用 `utils.data_processing.parse_coco_annotation()` 解析 COCO JSON，提取 `images`, `annotations`（`bbox` 和 `segmentation`）信息。
+  - 转换为 YOLO 格式：
+    - 检测：`class_id center_x center_y width height`，归一化到 [0, 1]，精度 6 位。
+    - 分割：`class_id x1 y1 x2 y2 ...`，归一化到 [0, 1]，精度 6 位，基于多边形坐标。
+  - 保存为 `.txt` 文件，文件名与图像一致，存储到临时目录。
+  - 若无有效标注，生成空 `.txt` 文件。
+- **FR-006：数据集分割**（优先级：高）
+  - 支持命令行参数或配置文件 `configs/data_split.yaml` 指定分割比例（默认：训练 80%、验证 10%、测试 10%）。
+  - 使用固定随机种子进行可重复分割。
+  - 复制图像和标签到 `data/train/`, `data/val/`, `data/test/` 对应目录。
+- **FR-007：`data.yaml` 文件生成**（优先级：高）
+  - 生成 `configs/data.yaml`，包含：
+    - `path`: 数据集根目录绝对路径。
+    - `train`, `val`, `test`: 对应图像目录绝对路径。
+    - `nc`: 类别数量（5）。
+    - `names`: 类别名称列表（`['NO_tumor', 'glioma', 'meningioma', 'pituitary', 'space-occupying lesion']`）。
+  - 示例：
+    ```
+    path: /path/to/MedicalYOLO/yoloserver/data
+    train: /path/to/MedicalYOLO/yoloserver/data/train/images
+    val: /path/to/MedicalYOLO/yoloserver/data/val/images
+    test: /path/to/MedicalYOLO/yoloserver/data/test/images
+    nc: 5
+    names: ['NO_tumor', 'glioma', 'meningioma', 'pituitary', 'space-occupying lesion']
+    ```
+- **FR-008：日志记录**（优先级：高）
+  - 使用 `utils.logging_utils.setup_logging(base_path, log_type='data_conversion', temp_log=True)` 初始化日志。
+  - 日志文件名为 `temp-时间戳-data-conversion.log`，保存到 `logging/data_conversion/`。
+  - 记录匹配结果、转换进度、分割情况、文件数量、`data.yaml` 生成状态。
+  - 重命名为 `convertN-时间戳-data-conversion.log`。
+  - 示例：
+    ```
+    2025-06-14 20:16:01,123 - YOLO_Trans - INFO - 数据转换开始
+    2025-06-14 20:16:01,124 - YOLO_Trans - INFO - 文件匹配: 1000 个图像, 998 个 COCO 标注, 2 个未匹配
+    2025-06-14 20:16:03,456 - YOLO_Trans - INFO - 转换完成: 998 个标签文件生成
+    2025-06-14 20:16:03,457 - YOLO_Trans - INFO - 分割结果: 训练=800, 验证=100, 测试=98
+    2025-06-14 20:16:03,458 - YOLO_Trans - INFO - data.yaml 生成: /path/to/configs/data.yaml
+    2025-06-14 20:16:03,459 - YOLO_Trans - INFO - 日志重命名: convert1-20250614_201603-data-conversion.log
+    ```
+
+### **4.3 数据集验证 (`scripts/yolo_validate.py`)**
+- **FR-009：`data.yaml` 文件验证**（优先级：高）
+  - 检查 `configs/data.yaml` 是否存在、可读。
+  - 验证 `nc` 和 `names` 一致性（`nc=5`，匹配指定类别列表），`train`, `val`, `test` 路径有效性。
+- **FR-010：图像与标签对应性验证**（优先级：高）
+  - 遍历 `data/train/images/`, `data/val/images/`, `data/test/images/`。
+  - 检查每个图像对应的 `.txt` 文件是否存在，记录不匹配情况。
+- **FR-011：标签文件内容验证**（优先级：高）
+  - 验证 `.txt` 文件格式：
+    - 检测：`class_id center_x center_y width height`。
+    - 分割：`class_id x1 y1 x2 y2 ...`。
+  - 检查 `class_id` 在 `0` 到 `nc-1` 范围内，坐标在 `[0, 1]` 范围内。
+  - 对于分割格式，验证多边形坐标对数量为偶数且至少 3 对（构成闭合多边形）。
+  - 记录格式错误、ID 越界或坐标越界的行。
+- **FR-012：日志记录**（优先级：高）
+  - 使用 `utils.logging_utils.setup_logging(base_path, log_type='dataset_verification', temp_log=True)` 初始化日志。
+  - 日志文件名为 `temp-时间戳-dataset-verification.log`，保存到 `logging/dataset_verification/`。
+  - 记录验证结果、错误详情。
+  - 重命名为 `valN-时间戳-dataset-verification.log`。
+  - 示例：
+    ```
+    2025-06-14 20:18:01,123 - YOLO_Validate - INFO - 数据集验证开始
+    2025-06-14 20:18:01,124 - YOLO_Validate - INFO - data.yaml 验证通过
+    2025-06-14 20:18:01,125 - YOLO_Validate - WARNING - 图像 image001.jpg 无对应标签文件
+    2025-06-14 20:18:01,126 - YOLO_Validate - ERROR - 标签 image002.txt 第2行: class_id=5 越界 (nc=5)
+    2025-06-14 20:18:01,127 - YOLO_Validate - ERROR - 标签 image003.txt 第1行: 分割坐标点数=5，非偶数
+    2025-06-14 20:18:01,128 - YOLO_Validate - INFO - 验证完成: 998/1000 文件通过
+    2025-06-14 20:18:01,129 - YOLO_Validate - INFO - 日志重命名: val1-20250614_201801-dataset-verification.log
+    ```
+
+### **4.4 通用功能模块 (`utils/` 包)**
+- **FR-013：路径管理**（优先级：高）
+  - `utils/paths.py` 定义绝对路径常量（如 `YOLO_SERVICE_DIR`, `CONFIGS_DIR`）。
+  - 脚本通过导入 `utils.paths` 获取路径，避免硬编码。
+- **FR-014：日志管理**（优先级：高）
+  - `utils/logging_utils.py` 提供 `setup_logging()` 和 `rename_log_file()`，支持文件和控制台输出，编码为 `utf-8-sig`。
+  - 日志保存到 `logging/{log_type}/`，重命名为 `{log_type}N-时间戳.log`。
+- **FR-015：数据处理核心**（优先级：高）
+  - `utils/data_processing.py` 封装 `parse_coco_annotation()`，处理 COCO JSON 解析和 YOLO 格式（检测和分割）转换。
+- **FR-016：数据集验证核心**（优先级：高）
+  - `utils/dataset_validation.py` 封装 `verify_dataset_config()`，验证 `data.yaml` 和标签内容（包括分割格式）。
+- **FR-017：模块导入**（优先级：中）
+  - 脚本动态调整 `sys.path`，确保 `utils` 包可导入。
+
+### **4.5 错误处理与健壮性**
+- **FR-018：文件/目录操作错误**（优先级：高）
+  - 捕获 `IOError`, `OSError`, `FileNotFoundError`，记录详细错误信息。
+  - 检查 `data.yaml`、图像和 COCO JSON 文件存在性，抛出 `FileNotFoundError`。
+- **FR-019：数据解析错误**（优先级：高）
+  - 捕获 `json.JSONDecodeError`, `ValueError`，记录错误并跳过问题文件。
+- **FR-020：参数验证**（优先级：高）
+  - 验证分割比例有效性（范围 [0, 1]，总和为 1），记录无效参数。
+
+## **5. 非功能需求**
+- **NF-001：代码规范**：
+  - 遵循 PEP 8，包含文档字符串和注释，变量采用 snake_case。
+- **NF-002：兼容性**：
+  - 支持 Windows/Linux，Python 3.12+。
+  - 依赖库列于 `requirements.txt`。
+- **NF-003：性能**：
+  - 1000 张图像的转换和验证在 5 分钟内完成（单核 CPU）。
+  - 日志和验证开销 < 0.5 秒。
+- **NF-004：可维护性**：
+  - 模块化设计，核心逻辑可复用。
+  - 清晰的日志和错误信息。
+- **NF-005：可靠性**：
+  - 容错处理异常数据，记录错误不中断流程。
+- **NF-006：可扩展性**：
+  - 支持未来扩展（如其他标注格式）。
+  - 数据输出格式（如 `data.yaml` 和数据集目录）与 `BTDweb` 和桌面端应用兼容。
+- **NF-007：文档**：
+  - README 包含脚本用法、参数、执行顺序。
+  - 测试报告包含日志、验证结果。
+
+## **6. 技术要求**
+- **编程语言**：Python 3.12+。
+- **核心库**：`pathlib`, `logging`, `PyYAML`, `json`, `shutil`, `numpy`, `opencv-python`.
+- **项目结构**：
+  ```
+  MedicalYOLO/
+  └── yoloserver/
+      ├── initialize_project.py
+      ├── scripts/
+      │   ├── yolo_trans.py
+      │   └── yolo_validate.py
+      ├── utils/
+      │   ├── __init__.py
+      │   ├── paths.py
+      │   ├── logging_utils.py
+      │   ├── data_processing.py
+      │   └── dataset_validation.py
+      ├── configs/
+      ├── data/
+      ├── logging/
+      ├── runs/
+      ├── models/
+      ├── requirements.txt
+      └── README.md
+  ```
+- **版本控制**：Git，分支 `feature/medical-data-pipeline`.
+
+## **7. 验收标准**
+- **AC-001：项目初始化**：
+  - 目录结构正确创建，日志记录所有操作。
+- **AC-002：数据转换**：
+  - YOLO 标签文件格式正确（检测和分割），坐标归一化，分割比例符合配置。
+  - `data.yaml` 包含正确路径和类别信息。
+- **AC-003：数据集验证**：
+  - 验证 `data.yaml`、图像-标签匹配性和标签内容（包括分割格式）。
+  - 输出详细错误报告或通过信息。
+- **AC-004：日志质量**：
+  - 日志文件按约定命名，包含操作、警告、错误信息。
+- **AC-005：代码质量**：
+  - 符合 PEP 8，无 linting 警告，包含文档字符串。
+- **AC-006：性能**：
+  - 1000 张图像处理时间 < 5 分钟。
+- **AC-007：文档**：
+  - README 包含用法、参数、依赖说明。
+  - 测试报告记录测试场景和结果。
+- **AC-008：兼容性**：
+  - 数据输出格式支持 `BTDweb` 和潜在桌面端应用对接。
+
+## **8. 开发流程**
+- **流程**：
+  1. 需求分析，确认接口和功能。
+  2. 开发 `utils/` 模块（路径、日志、数据处理、验证）。
+  3. 开发 `initialize_project.py`。
+  4. 开发 `yolo_trans.py` 和 `yolo_validate.py`。
+  5. 进行集成测试。
+  6. 编写 README 和测试报告。
+  7. 提交 Pull Request。
+- **时间**：2025年6月15日 - 6月19日（4 个工作日）。
+- **职责**：
+  - 开发：代码实现、单元测试。
+  - 测试：功能、性能、兼容性测试。
+  - 经理：需求评审、进度跟踪。
+
+## **9. 风险与缓解措施**
+- **R-001：COCO JSON 格式不规范**：
+  - 增加 JSON 校验，记录错误并跳过。
+- **R-002：数据集分割不均衡**：
+  - 提供分层抽样选项，验证类别分布。
+- **R-003：性能瓶颈**：
+  - 优化 I/O 操作，支持多线程处理。
+- **R-004：路径兼容性**：
+  - 使用 `pathlib.Path` 确保跨平台支持。
+- **R-005：日志冲突**：
+  - 时间戳命名和重命名逻辑确保唯一性。
+
+## **10. 交付物**
+- **代码**：`initialize_project.py`, `scripts/yolo_trans.py`, `scripts/yolo_validate.py`, `utils/` 包。
+- **配置**：`configs/data.yaml`。
+- **文档**：README、测试报告。
+- **Git 提交**：分支 `feature/medical-data-pipeline`.
+
+## **11. 参考资源**
+- **内部代码**：`utils/paths.py`, `utils/logging_utils.py`, `utils/data_processing.py`, `utils/dataset_validation.py`.
+- **外部文档**：
+  - Ultralytics YOLOv8/YOLOv11 文档（https://docs.ultralytics.com/）。
+  - COCO 数据集规范（http://cocodataset.org/）。
+  - Python `pathlib` 文档（https://docs.python.org/3/library/pathlib.html）。
+  - Python `logging` 文档（https://docs.python.org/3/library/logging.html）。
+
+## **12. 审批流程**
+- 提交 `feature/medical-data-pipeline` 分支。
+- 至少两名开发者审查代码。
+- 测试团队验证功能和性能。
+- 项目经理审核文档和测试报告。
+- 合并至 `main` 分支，归档文档。
+
+## **附录：技术细节**
+- **YOLO 检测格式转换公式**：
+  - `center_x = (bbox_x + bbox_width/2) / image_width`
+  - `center_y = (bbox_y + bbox_height/2) / image_height`
+  - `width = bbox_width / image_width`
+  - `height = bbox_height / image_height`
+- **YOLO 分割格式**：
+  - `class_id x1 y1 x2 y2 ...`，其中 `(x_i, y_i)` 为多边形归一化坐标，`x_i = pixel_x / image_width`, `y_i = pixel_y / image_height`。
+- **日志级别**：
+  - INFO：正常操作信息。
+  - WARNING：可忽略的异常（如未匹配文件）。
+  - ERROR：严重问题（如 JSON 解析失败）。
